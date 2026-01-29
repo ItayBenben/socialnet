@@ -11,8 +11,10 @@ const connectDB = require('../config/database');
 connectDB();
 
 const postRoutes = require('../routes/postRoutes');
+const commentRoutes = require('../routes/commentRoutes');
 
 app.use('/post', postRoutes);
+app.use('/comment', commentRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });

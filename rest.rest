@@ -1,0 +1,73 @@
+### SocialNet API Requests
+
+@baseUrl = http://localhost:3000
+
+### ==================== POSTS API ====================
+
+### Health Check
+GET {{baseUrl}}/
+
+### Create a new post
+POST {{baseUrl}}/post
+Content-Type: application/json
+
+{
+  "title": "My First Post",
+  "content": "This is the content of my first post",
+  "senderId": "user123"
+}
+
+### Get all posts
+GET {{baseUrl}}/post
+
+### Get posts by sender ID
+GET {{baseUrl}}/post?sender=user123
+
+### Get post by ID (replace with actual post ID)
+GET {{baseUrl}}/post/60d5ecb74e4d7a2d8c9b1234
+
+### Update a post (replace with actual post ID)
+PUT {{baseUrl}}/post/60d5ecb74e4d7a2d8c9b1234
+Content-Type: application/json
+
+{
+  "title": "Updated Post Title",
+  "content": "Updated content for this post",
+  "senderId": "user123"
+}
+
+### Delete a post (replace with actual post ID)
+DELETE {{baseUrl}}/post/60d5ecb74e4d7a2d8c9b1234
+
+### ==================== COMMENTS API ====================
+
+### Create a new comment (replace postId with actual post ID)
+POST {{baseUrl}}/comment
+Content-Type: application/json
+
+{
+  "content": "This is a comment on the post",
+  "postId": "60d5ecb74e4d7a2d8c9b1234",
+  "senderId": "user456"
+}
+
+### Get all comments
+GET {{baseUrl}}/comment
+
+### Get comments by post ID (replace with actual post ID)
+GET {{baseUrl}}/comment?postId=60d5ecb74e4d7a2d8c9b1234
+
+### Get comment by ID (replace with actual comment ID)
+GET {{baseUrl}}/comment/60d5ecb74e4d7a2d8c9b5678
+
+### Update a comment (replace with actual comment ID)
+PUT {{baseUrl}}/comment/60d5ecb74e4d7a2d8c9b5678
+Content-Type: application/json
+
+{
+  "content": "Updated comment content",
+  "senderId": "user456"
+}
+
+### Delete a comment (replace with actual comment ID)
+DELETE {{baseUrl}}/comment/60d5ecb74e4d7a2d8c9b5678
