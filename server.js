@@ -12,7 +12,9 @@ connectDB();
 
 const postRoutes = require('../routes/postRoutes');
 const commentRoutes = require('../routes/commentRoutes');
+const userRoutes = require('../routes/userRoutes');
 
+app.use('/user', userRoutes);
 app.use('/post', postRoutes);
 app.use('/comment', commentRoutes);
 

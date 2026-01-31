@@ -11,10 +11,10 @@ const postSchema = new mongoose.Schema({
     required: [true, 'Content is required'],
     trim: true,
   },
-  senderId: {
-    type: String,
-    required: [true, 'Sender ID is required'],
-    trim: true,
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Author is required'],
   },
   createdAt: {
     type: Date,
@@ -24,7 +24,7 @@ const postSchema = new mongoose.Schema({
   timestamps: false,
 });
 
-postSchema.index({ senderId: 1 });
+postSchema.index({ author: 1 });
 
 const Post = mongoose.model('Post', postSchema);
 

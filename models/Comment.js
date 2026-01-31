@@ -11,10 +11,10 @@ const commentSchema = new mongoose.Schema({
     ref: 'Post',
     required: [true, 'Post ID is required'],
   },
-  senderId: {
-    type: String,
-    required: [true, 'Sender ID is required'],
-    trim: true,
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Author is required'],
   },
   createdAt: {
     type: Date,
@@ -25,7 +25,7 @@ const commentSchema = new mongoose.Schema({
 });
 
 commentSchema.index({ postId: 1 });
-commentSchema.index({ senderId: 1 });
+commentSchema.index({ author: 1 });
 
 const Comment = mongoose.model('Comment', commentSchema);
 
