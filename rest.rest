@@ -1,27 +1,95 @@
 ### SocialNet API Requests
 
 @baseUrl = http://localhost:3000
+@accessToken = YOUR_ACCESS_TOKEN_HERE
+@refreshToken = YOUR_REFRESH_TOKEN_HERE
 
-### ==================== POSTS API ====================
+### ==================== HEALTH CHECK ====================
 
 ### Health Check
 GET {{baseUrl}}/
 
-### Create a new post
+### ==================== AUTH API ====================
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout (requires authentication)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### ==================== USERS API ====================
+
+### Get all users
+GET {{baseUrl}}/user
+
+### Get users filtered by username
+GET {{baseUrl}}/user?username=john
+
+### Get user by ID (replace with actual user ID)
+GET {{baseUrl}}/user/60d5ecb74e4d7a2d8c9b1234
+
+### Update a user (replace with actual user ID)
+PUT {{baseUrl}}/user/60d5ecb74e4d7a2d8c9b1234
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "bio": "Updated bio"
+}
+
+### Delete a user (replace with actual user ID)
+DELETE {{baseUrl}}/user/60d5ecb74e4d7a2d8c9b1234
+
+### ==================== POSTS API ====================
+
+### Create a new post (replace author with actual user ID)
 POST {{baseUrl}}/post
 Content-Type: application/json
 
 {
   "title": "My First Post",
   "content": "This is the content of my first post",
-  "senderId": "user123"
+  "author": "60d5ecb74e4d7a2d8c9b1234"
 }
 
 ### Get all posts
 GET {{baseUrl}}/post
 
-### Get posts by sender ID
-GET {{baseUrl}}/post?sender=user123
+### Get posts by author ID
+GET {{baseUrl}}/post?author=60d5ecb74e4d7a2d8c9b1234
 
 ### Get post by ID (replace with actual post ID)
 GET {{baseUrl}}/post/60d5ecb74e4d7a2d8c9b1234
@@ -32,8 +100,7 @@ Content-Type: application/json
 
 {
   "title": "Updated Post Title",
-  "content": "Updated content for this post",
-  "senderId": "user123"
+  "content": "Updated content for this post"
 }
 
 ### Delete a post (replace with actual post ID)
@@ -41,21 +108,24 @@ DELETE {{baseUrl}}/post/60d5ecb74e4d7a2d8c9b1234
 
 ### ==================== COMMENTS API ====================
 
-### Create a new comment (replace postId with actual post ID)
+### Create a new comment (replace postId and author with actual IDs)
 POST {{baseUrl}}/comment
 Content-Type: application/json
 
 {
   "content": "This is a comment on the post",
   "postId": "60d5ecb74e4d7a2d8c9b1234",
-  "senderId": "user456"
+  "author": "60d5ecb74e4d7a2d8c9b5678"
 }
 
 ### Get all comments
 GET {{baseUrl}}/comment
 
-### Get comments by post ID (replace with actual post ID)
+### Get comments by post ID
 GET {{baseUrl}}/comment?postId=60d5ecb74e4d7a2d8c9b1234
+
+### Get comments by author ID
+GET {{baseUrl}}/comment?author=60d5ecb74e4d7a2d8c9b5678
 
 ### Get comment by ID (replace with actual comment ID)
 GET {{baseUrl}}/comment/60d5ecb74e4d7a2d8c9b5678
@@ -65,8 +135,7 @@ PUT {{baseUrl}}/comment/60d5ecb74e4d7a2d8c9b5678
 Content-Type: application/json
 
 {
-  "content": "Updated comment content",
-  "senderId": "user456"
+  "content": "Updated comment content"
 }
 
 ### Delete a comment (replace with actual comment ID)

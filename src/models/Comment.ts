@@ -1,18 +1,19 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema } from 'mongoose';
+import { IComment } from '../types';
 
-const commentSchema = new mongoose.Schema({
+const commentSchema = new Schema<IComment>({
   content: {
     type: String,
     required: [true, 'Content is required'],
     trim: true,
   },
   postId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Post',
     required: [true, 'Post ID is required'],
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Author is required'],
   },
@@ -20,13 +21,11 @@ const commentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-}, {
-  timestamps: false,
 });
 
 commentSchema.index({ postId: 1 });
 commentSchema.index({ author: 1 });
 
-const Comment = mongoose.model('Comment', commentSchema);
+const Comment = mongoose.model<IComment>('Comment', commentSchema);
 
-module.exports = Comment;
+export default Comment;

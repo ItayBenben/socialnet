@@ -1,32 +1,34 @@
-const Post = require('../models/Post');
-const mongoose = require('mongoose');
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import Post from '../models/Post';
+import User from '../models/User';
 
-const User = require('../models/User');
-
-const createPost = async (req, res) => {
+export const createPost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, content, author } = req.body;
 
     if (!title || !content || !author) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         message: 'Title, content, and author (user ID) are required',
       });
+      return;
     }
 
     if (!mongoose.Types.ObjectId.isValid(author)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid author ID format',
       });
+      return;
     }
 
-    // Verify that the author (user) exists
     const user = await User.findById(author);
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'User not found',
         message: 'Cannot create post for non-existent user',
       });
+      return;
     }
 
     const post = new Post({
@@ -36,30 +38,33 @@ const createPost = async (req, res) => {
     });
 
     const savedPost = await post.save();
-    const populatedPost = await Post.findById(savedPost._id).populate('author', 'username email firstName lastName');
+    const populatedPost = await Post.findById(savedPost._id)
+      .populate('author', 'username email firstName lastName');
+
     res.status(201).json({
       message: 'Post created successfully',
       post: populatedPost,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to create post',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const getAllPosts = async (req, res) => {
+export const getAllPosts = async (req: Request, res: Response): Promise<void> => {
   try {
     const { author } = req.query;
-    let query = {};
+    const query: Record<string, unknown> = {};
 
-    // Filter by author if provided
     if (author) {
-      if (!mongoose.Types.ObjectId.isValid(author)) {
-        return res.status(400).json({
+      if (!mongoose.Types.ObjectId.isValid(author as string)) {
+        res.status(400).json({
           error: 'Invalid author ID format',
         });
+        return;
       }
       query.author = author;
     }
@@ -67,79 +72,90 @@ const getAllPosts = async (req, res) => {
     const posts = await Post.find(query)
       .populate('author', 'username email firstName lastName')
       .sort({ createdAt: -1 });
+
     res.status(200).json({
       count: posts.length,
       posts,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to retrieve posts',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const getPostById = async (req, res) => {
+export const getPostById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid post ID format',
       });
+      return;
     }
 
-    const post = await Post.findById(id).populate('author', 'username email firstName lastName');
+    const post = await Post.findById(id)
+      .populate('author', 'username email firstName lastName');
 
     if (!post) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Post not found',
       });
+      return;
     }
 
     res.status(200).json({
       post,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to retrieve post',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const updatePost = async (req, res) => {
+export const updatePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { title, content, author } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid post ID format',
       });
+      return;
     }
 
     if (!title || !content) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         message: 'Title and content are required for update',
       });
+      return;
     }
 
-    const updateData = { title, content };
+    const updateData: Record<string, unknown> = { title, content };
+
     if (author) {
       if (!mongoose.Types.ObjectId.isValid(author)) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Invalid author ID format',
         });
+        return;
       }
-      // Verify that the author (user) exists
+
       const user = await User.findById(author);
       if (!user) {
-        return res.status(404).json({
+        res.status(404).json({
           error: 'User not found',
           message: 'Cannot update post with non-existent user',
         });
+        return;
       }
       updateData.author = author;
     }
@@ -151,9 +167,10 @@ const updatePost = async (req, res) => {
     ).populate('author', 'username email firstName lastName');
 
     if (!post) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Post not found',
       });
+      return;
     }
 
     res.status(200).json({
@@ -161,29 +178,33 @@ const updatePost = async (req, res) => {
       post,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to update post',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const deletePost = async (req, res) => {
+export const deletePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid post ID format',
       });
+      return;
     }
 
-    const post = await Post.findByIdAndDelete(id);
+    const post = await Post.findByIdAndDelete(id)
+      .populate('author', 'username email firstName lastName');
 
     if (!post) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Post not found',
       });
+      return;
     }
 
     res.status(200).json({
@@ -191,18 +212,10 @@ const deletePost = async (req, res) => {
       post,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to delete post',
-      message: error.message,
+      message: err.message,
     });
   }
 };
-
-module.exports = {
-  createPost,
-  getAllPosts,
-  getPostById,
-  updatePost,
-  deletePost,
-};
-

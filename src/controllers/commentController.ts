@@ -1,47 +1,51 @@
-const Comment = require('../models/Comment');
-const Post = require('../models/Post');
-const mongoose = require('mongoose');
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import Comment from '../models/Comment';
+import Post from '../models/Post';
+import User from '../models/User';
 
-const User = require('../models/User');
-
-const createComment = async (req, res) => {
+export const createComment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { content, postId, author } = req.body;
 
     if (!content || !postId || !author) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         message: 'Content, postId, and author (user ID) are required',
       });
+      return;
     }
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid post ID format',
       });
+      return;
     }
 
     if (!mongoose.Types.ObjectId.isValid(author)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid author ID format',
       });
+      return;
     }
 
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Post not found',
         message: 'Cannot create comment for non-existent post',
       });
+      return;
     }
 
-    // Verify that the author (user) exists
     const user = await User.findById(author);
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'User not found',
         message: 'Cannot create comment for non-existent user',
       });
+      return;
     }
 
     const comment = new Comment({
@@ -51,38 +55,43 @@ const createComment = async (req, res) => {
     });
 
     const savedComment = await comment.save();
-    const populatedComment = await Comment.findById(savedComment._id).populate('author', 'username email firstName lastName');
+    const populatedComment = await Comment.findById(savedComment._id)
+      .populate('author', 'username email firstName lastName');
+
     res.status(201).json({
       message: 'Comment created successfully',
       comment: populatedComment,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to create comment',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const getAllComments = async (req, res) => {
+export const getAllComments = async (req: Request, res: Response): Promise<void> => {
   try {
     const { postId, author } = req.query;
-    let query = {};
+    const query: Record<string, unknown> = {};
 
     if (postId) {
-      if (!mongoose.Types.ObjectId.isValid(postId)) {
-        return res.status(400).json({
+      if (!mongoose.Types.ObjectId.isValid(postId as string)) {
+        res.status(400).json({
           error: 'Invalid post ID format',
         });
+        return;
       }
       query.postId = postId;
     }
 
     if (author) {
-      if (!mongoose.Types.ObjectId.isValid(author)) {
-        return res.status(400).json({
+      if (!mongoose.Types.ObjectId.isValid(author as string)) {
+        res.status(400).json({
           error: 'Invalid author ID format',
         });
+        return;
       }
       query.author = author;
     }
@@ -90,79 +99,90 @@ const getAllComments = async (req, res) => {
     const comments = await Comment.find(query)
       .populate('author', 'username email firstName lastName')
       .sort({ createdAt: -1 });
+
     res.status(200).json({
       count: comments.length,
       comments,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to retrieve comments',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const getCommentById = async (req, res) => {
+export const getCommentById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid comment ID format',
       });
+      return;
     }
 
-    const comment = await Comment.findById(id).populate('author', 'username email firstName lastName');
+    const comment = await Comment.findById(id)
+      .populate('author', 'username email firstName lastName');
 
     if (!comment) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Comment not found',
       });
+      return;
     }
 
     res.status(200).json({
       comment,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to retrieve comment',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const updateComment = async (req, res) => {
+export const updateComment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { content, author } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid comment ID format',
       });
+      return;
     }
 
     if (!content) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required fields',
         message: 'Content is required for update',
       });
+      return;
     }
 
-    const updateData = { content };
+    const updateData: Record<string, unknown> = { content };
+
     if (author) {
       if (!mongoose.Types.ObjectId.isValid(author)) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Invalid author ID format',
         });
+        return;
       }
-      // Verify that the author (user) exists
+
       const user = await User.findById(author);
       if (!user) {
-        return res.status(404).json({
+        res.status(404).json({
           error: 'User not found',
           message: 'Cannot update comment with non-existent user',
         });
+        return;
       }
       updateData.author = author;
     }
@@ -174,9 +194,10 @@ const updateComment = async (req, res) => {
     ).populate('author', 'username email firstName lastName');
 
     if (!comment) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Comment not found',
       });
+      return;
     }
 
     res.status(200).json({
@@ -184,29 +205,33 @@ const updateComment = async (req, res) => {
       comment,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to update comment',
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-const deleteComment = async (req, res) => {
+export const deleteComment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid comment ID format',
       });
+      return;
     }
 
-    const comment = await Comment.findByIdAndDelete(id);
+    const comment = await Comment.findByIdAndDelete(id)
+      .populate('author', 'username email firstName lastName');
 
     if (!comment) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Comment not found',
       });
+      return;
     }
 
     res.status(200).json({
@@ -214,17 +239,10 @@ const deleteComment = async (req, res) => {
       comment,
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({
       error: 'Failed to delete comment',
-      message: error.message,
+      message: err.message,
     });
   }
-};
-
-module.exports = {
-  createComment,
-  getAllComments,
-  getCommentById,
-  updateComment,
-  deleteComment,
 };
