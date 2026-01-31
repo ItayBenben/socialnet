@@ -2,20 +2,28 @@ const Comment = require('../models/Comment');
 const Post = require('../models/Post');
 const mongoose = require('mongoose');
 
+const User = require('../models/User');
+
 const createComment = async (req, res) => {
   try {
-    const { content, postId, senderId } = req.body;
+    const { content, postId, author } = req.body;
 
-    if (!content || !postId || !senderId) {
+    if (!content || !postId || !author) {
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'Content, postId, and senderId are required',
+        message: 'Content, postId, and author (user ID) are required',
       });
     }
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       return res.status(400).json({
         error: 'Invalid post ID format',
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(author)) {
+      return res.status(400).json({
+        error: 'Invalid author ID format',
       });
     }
 
@@ -27,16 +35,26 @@ const createComment = async (req, res) => {
       });
     }
 
+    // Verify that the author (user) exists
+    const user = await User.findById(author);
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'Cannot create comment for non-existent user',
+      });
+    }
+
     const comment = new Comment({
       content,
       postId,
-      senderId,
+      author,
     });
 
     const savedComment = await comment.save();
+    const populatedComment = await Comment.findById(savedComment._id).populate('author', 'username email firstName lastName');
     res.status(201).json({
       message: 'Comment created successfully',
-      comment: savedComment,
+      comment: populatedComment,
     });
   } catch (error) {
     res.status(500).json({
@@ -48,7 +66,7 @@ const createComment = async (req, res) => {
 
 const getAllComments = async (req, res) => {
   try {
-    const { postId } = req.query;
+    const { postId, author } = req.query;
     let query = {};
 
     if (postId) {
@@ -60,7 +78,18 @@ const getAllComments = async (req, res) => {
       query.postId = postId;
     }
 
-    const comments = await Comment.find(query).sort({ createdAt: -1 });
+    if (author) {
+      if (!mongoose.Types.ObjectId.isValid(author)) {
+        return res.status(400).json({
+          error: 'Invalid author ID format',
+        });
+      }
+      query.author = author;
+    }
+
+    const comments = await Comment.find(query)
+      .populate('author', 'username email firstName lastName')
+      .sort({ createdAt: -1 });
     res.status(200).json({
       count: comments.length,
       comments,
@@ -83,7 +112,7 @@ const getCommentById = async (req, res) => {
       });
     }
 
-    const comment = await Comment.findById(id);
+    const comment = await Comment.findById(id).populate('author', 'username email firstName lastName');
 
     if (!comment) {
       return res.status(404).json({
@@ -105,7 +134,7 @@ const getCommentById = async (req, res) => {
 const updateComment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, senderId } = req.body;
+    const { content, author } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -113,18 +142,36 @@ const updateComment = async (req, res) => {
       });
     }
 
-    if (!content || !senderId) {
+    if (!content) {
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'Content and senderId are required for update',
+        message: 'Content is required for update',
       });
+    }
+
+    const updateData = { content };
+    if (author) {
+      if (!mongoose.Types.ObjectId.isValid(author)) {
+        return res.status(400).json({
+          error: 'Invalid author ID format',
+        });
+      }
+      // Verify that the author (user) exists
+      const user = await User.findById(author);
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'Cannot update comment with non-existent user',
+        });
+      }
+      updateData.author = author;
     }
 
     const comment = await Comment.findByIdAndUpdate(
       id,
-      { content, senderId },
+      updateData,
       { new: true, runValidators: true }
-    );
+    ).populate('author', 'username email firstName lastName');
 
     if (!comment) {
       return res.status(404).json({
