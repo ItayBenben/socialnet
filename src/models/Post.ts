@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema } from 'mongoose';
+import { IPost } from '../types';
 
-const postSchema = new mongoose.Schema({
+const postSchema = new Schema<IPost>({
   title: {
     type: String,
     required: [true, 'Title is required'],
@@ -12,7 +13,7 @@ const postSchema = new mongoose.Schema({
     trim: true,
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Author is required'],
   },
@@ -20,13 +21,10 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-}, {
-  timestamps: false,
 });
 
 postSchema.index({ author: 1 });
 
-const Post = mongoose.model('Post', postSchema);
+const Post = mongoose.model<IPost>('Post', postSchema);
 
-module.exports = Post;
-
+export default Post;
